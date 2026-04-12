@@ -34,7 +34,7 @@ python simulation.py
 
 ## Roadmap
 
-- [ ] Add virtual camera to the simulation
+- [x] Add virtual camera to the simulation
 - [ ] Detect cube position using YOLOv8 instead of hardcoded coordinates
 - [ ] Add voice command parsing (Whisper)
 - [ ] Connect to physical robot arm
