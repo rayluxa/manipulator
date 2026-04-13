@@ -31,7 +31,7 @@ def capture_frame():
     state = p.getLinkState(robot, 6) # coordinates of 6-th joing and other its staff
     camera_position = state[4] 
     view_matrix = p.computeViewMatrix(
-        cameraEyePosition=[camera_position[0],camera_position[1],camera_position[2]-0.12]    ,
+        cameraEyePosition=[camera_position[0],camera_position[1],camera_position[2]-0.12],
         cameraTargetPosition=[camera_position[0],camera_position[1],camera_position[2]-0.5],
         cameraUpVector=[0, 1, 0]
     )
@@ -49,6 +49,7 @@ def capture_frame():
     depth_arr = np.array(depth, dtype=np.float32).reshape(480, 640)
     return rgb_arr, depth_arr
 
+
 rgb, depth = capture_frame()
 print("depth min:", depth.min())
 print("depth max:", depth.max())
@@ -58,26 +59,41 @@ gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)  # в оттенки серого
 _, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)  # бинаризация - белое/чёрное
 contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # найти контуры
 
+
 while True:
     p.stepSimulation()
     time.sleep(1./240.)
     
     rgb, depth = capture_frame()
     
-    # детектирование через depth
-    cube_mask = (depth < 0.935).astype(np.uint8) * 255
+    # детектирование глубины
+    depth_threshold = depth.max() 
+    cube_mask = (depth < depth_threshold).astype(np.uint8) * 255
     contours, _ = cv2.findContours(cube_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    frame = rgb.copy()   # создаём копию ОДИН раз снаружи цикла по контурам
     
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
         area = w * h
+        
         if area > 500 and abs(w - h) < 20:
-            print("куб найден на позиции:", x, y, w, h)
-            frame = rgb.copy()
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+            print("куб найден на позиции:", x, y, " его длина и ширина: ", w, h)
+            
+            center_x = x + w / 2
+            center_y = y + h / 2
+            
+            offset_x = center_x - 320
+            offset_y = center_y - 240
+            
+            print(f"Центр куба: ({center_x:.1f}, {center_y:.1f}) | Отклонение: ({offset_x:.1f}, {offset_y:.1f})")
+            
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            cv2.circle(frame, (int(center_x), int(center_y)), 5, (0, 255, 0), -1)  # центр куба
     
+    # всегда показываем картинку, даже если куб не найден
     cv2.imshow("camera", cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
     cv2.imshow("depth_mask", cube_mask)
-    
+
     if cv2.waitKey(1) == ord('q'):
         break
