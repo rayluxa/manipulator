@@ -35,6 +35,6 @@ python simulation.py
 ## Roadmap
 
 - [x] Add virtual camera to the simulation
-- [ ] Detect cube position using YOLOv8 instead of hardcoded coordinates
+- [ ] Detect cube position using segmentation
 - [ ] Add voice command parsing (Whisper)
 - [ ] Connect to physical robot arm
